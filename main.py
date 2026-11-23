@@ -229,8 +229,8 @@ class App(mglw.WindowConfig):
             self.keyStates["SPACE"] = True if action == keys.ACTION_PRESS else False if action == keys.ACTION_RELEASE else self.keyStates["SPACE"]
 
 
-#if __name__ == '__main__':
-mglw.run_window_config(App, args=["--window", "glfw"])
+if __name__ == '__main__':
+    mglw.run_window_config(App, args=["--window", "glfw"])
 
 
     
