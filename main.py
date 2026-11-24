@@ -241,6 +241,7 @@ class App(mglw.WindowConfig):
             self.keyStates["DOWN"] = True if action == keys.ACTION_PRESS else False if action == keys.ACTION_RELEASE else self.keyStates["DOWN"]
 
 
+
 if __name__ == '__main__':
     
     mglw.run_window_config(App, args=["--window", "glfw"])

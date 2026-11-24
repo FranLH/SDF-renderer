@@ -16,9 +16,9 @@ uniform vec3 light_source_pos;
 const float MAX_DISTANCE = 1000.0;
 const float shadowOffset = 0.05;
 const float epsilon = 0.001;
-const vec3 lightColor = vec3(1.0, 0.95, 0.9); // Warm white sun
+const vec3 lightColor = vec3(1.0, 0.8, 0.3); // Warm sun
 const float lightSize = 1;
-const vec3 ambientColor = vec3(0.25, 0.28, 0.35); // Cool sky bounce light
+const vec3 ambientColor = vec3(0.1, 0.68, 0.85); // Cool sky bounce light
 
 uniform int FOV;
 uniform vec3 camPos;
@@ -148,7 +148,7 @@ vec3 calculateColor(bool hit, vec3 hitPos, bool escaped, int colorID, bool hitLi
 	if (escaped)
 	{
 		// col = vec3(0.0+smoothstep(0.0, 0.9, acos(lightDot)*lightSize),1.0,1.0);
-		col = vec3(0.0, 1.0,1.0);
+		col = ambientColor;
 		//col = vec3(0.0+1/(1-acos(lightDot)/lightSize),1.0,1.0);
 	}
 	else // if (hit)
