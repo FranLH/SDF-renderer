@@ -58,13 +58,14 @@ objects[3]["data"] = (20,200,30,200)
 
 
 class App(mglw.WindowConfig):
-    window_size = [1440,900]
+    window_size = [960, 540]
     fullscreen = False
     vsync = False 
     
     resource_dir = 'Shaders'
     
     def __init__(self, **kwargs):
+
         super().__init__(**kwargs)
         self.wnd.mouse_exclusivity = True
         #self.wnd.fullscreen = False
@@ -98,7 +99,9 @@ class App(mglw.WindowConfig):
 
         self.moveSpeed=1
         self.rotateSpeed = 0.1
-        self.maxSteps = 200
+        self.maxSteps = 100
+        self.shadowsEnabled = True
+        self.lightSourcePos = (300, 80, 50)
         # -----------------------------------------
         
         self.keyStates = {
@@ -122,7 +125,6 @@ class App(mglw.WindowConfig):
 
         #self.set_uniform("MAX_STEPS", self.maxSteps)
         self.on_resize(*self.wnd.buffer_size) # Updates window size at the start
-        
 
         
     def on_mouse_position_event(self, x, y, dx, dy):
@@ -187,6 +189,8 @@ class App(mglw.WindowConfig):
 #         self.set_uniform('DEPTH', self.depth)
         self.set_uniform('time', time)
         self.set_uniform('MAX_STEPS', self.maxSteps)
+        self.set_uniform('SHADOWS_ENABLED', self.shadowsEnabled)
+        self.set_uniform('light_source_pos', self.lightSourcePos)
 #         self.set_uniform('zoom', self.camera.zoom)
         self.set_uniform('camPos', self.camera.pos)
         self.set_uniform('orientation', self.camera.orientation)
@@ -230,7 +234,9 @@ class App(mglw.WindowConfig):
 
 
 if __name__ == '__main__':
+    
     mglw.run_window_config(App, args=["--window", "glfw"])
+    
 
 
     

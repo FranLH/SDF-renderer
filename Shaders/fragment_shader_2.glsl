@@ -10,6 +10,8 @@ uniform vec2 resolution;
 uniform float time;
 uniform int objectCount;
 uniform int MAX_STEPS;
+uniform bool SHADOWS_ENABLED;
+uniform vec3 light_source_pos;
 
 const float MAX_DISTANCE = 1000.0;
 
@@ -78,17 +80,19 @@ float EvaluateObject(SDFObject object, vec3 pos)
 float ApplyOperations(float baseDist, int objID, vec3 rayPos)
 {
 	SDFObject obj = objects[objID];
-	int operation = obj.info.z;
-	int nextOperationID = obj.info.w;
+	int operation;
+	int nextOperationID;
 	float dist;
 
-	while (nextOperationID != objID)
+	for (int i=0; i < 16; i++)
 	{
+		operation = obj.info.z;
+		nextOperationID = obj.info.w;
 		dist = EvaluateObject(obj, rayPos);
 		if (operation == 1) // Subtraction
 		{
 			dist = max(baseDist, -dist);
-		}
+		}	
 		else if (operation == 2) // Intersection
 		{
 			dist = max(baseDist, dist);
@@ -99,7 +103,26 @@ float ApplyOperations(float baseDist, int objID, vec3 rayPos)
 			objID = nextOperationID;
 			obj = objects[objID];
 		}
+		if (nextOperationID == objID) break;
 	}
+	// while (nextOperationID != objID)
+	// {
+	// 	dist = EvaluateObject(obj, rayPos);
+	// 	if (operation == 1) // Subtraction
+	// 	{
+	// 		dist = max(baseDist, -dist);
+	// 	}	
+	// 	else if (operation == 2) // Intersection
+	// 	{
+	// 		dist = max(baseDist, dist);
+	// 	}
+	// 	if (obj.info.w != objID) // If there are more operations in the chain
+	// 	{
+	// 		baseDist = dist;
+	// 		objID = nextOperationID;
+	// 		obj = objects[objID];
+	// 	}
+	// }
 	dist = EvaluateObject(obj, rayPos);
 	if (operation == 1) // Subtraction
 	{
@@ -131,7 +154,7 @@ vec3 calculateColor(bool hit, vec3 hitPos, bool escaped, int colorID)
 			col = colors2[colorID];
 		}
 	}
-	else
+	else // Ran out of steps
 	{
 		col = vec3(0.0,0.0,0.0); // sky color
 	}
@@ -151,7 +174,7 @@ mat4 CamToWorldMatrix(vec3 translation, vec3 forward)
 
 void main()
 {
-	float epsilon = 0.1;
+	float epsilon = 0.01;
 	int steps = 0;
 	vec2 UV = (uv - 0.5) * vec2(resolution.x / resolution.y, 1.0); // Accounted for image aspect ratio and centering. Inverts Y
 	vec3 rayPos = camPos; // Ray origin
@@ -190,11 +213,61 @@ void main()
 		rayPos+=rayDirection*minDist;
 		steps+=1;
 	}
+	rayPos-=rayDirection*epsilon; // Push back to avoid shadow problems. Would be better to push in the direction of the normal
 
 	vec3 col = calculateColor(steps<MAX_STEPS, rayPos, minDist>MAX_DISTANCE, objects[closest].info.y);
 
-	//vec3 col = CalcColor(ComplexAnalize(DEPTH, UV/zoom+camPos), UV/zoom+camPos);
 
 
+	if (SHADOWS_ENABLED && minDist<=epsilon)
+	{
+		float epsilon = 0.0001;
+		int steps = 0;
+		vec3 shadowRayPos = rayPos; // Ray origin
+		vec3 rayDirection = normalize(-rayPos+light_source_pos); // Ray direction
+		float maxDist = distance(rayPos, light_source_pos);
+		//shadowRayPos += rayDirection*(epsilon*5);
+		float len = 0;
+		while (steps<100)
+		{
+			minDist = 1e5;
+			
+			for (int i = 0; i < objectCount; i++)
+			{
+				if (objects[i].info.z != 0)
+				{
+					continue;
+				}
+				float dist = EvaluateObject(objects[i], shadowRayPos);
+				if (objects[i].info.w != 0)
+				{
+					dist = ApplyOperations(dist, objects[i].info.w, shadowRayPos);
+				}
+				if (dist < minDist)
+				{
+					minDist = dist;
+				}
+			}
+			if (minDist < epsilon || minDist > MAX_DISTANCE)
+			{
+				break;
+			}
+
+			shadowRayPos+=rayDirection*minDist;
+			len += minDist;
+			steps+=1;
+		}
+		//float darkness = distance(shadowRayPos, rayPos);
+		if (minDist < epsilon) // If the light source gets blocked by any object
+		{
+			col *= min(0.5*(max((5*len/maxDist), 1)), 1); // FIX
+		}
+		// else
+		// {
+		// 	col *= min((0.5/min(closest, 1.0)), 1.0) ;
+		// }
+	}
+
+	
 	fragColor = vec4(col, 1.0);
 }
