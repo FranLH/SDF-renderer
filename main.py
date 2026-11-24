@@ -71,7 +71,7 @@ class App(mglw.WindowConfig):
         #self.wnd.fullscreen = False
         print(type(self.wnd))
         print(self.wnd.name)
-        
+        self.ftime = 1
         self.main_texture = self.ctx.texture(self.window_size, components=4)# 8-bit normalized
         self.main_texture.filter = (self.ctx.LINEAR, self.ctx.LINEAR)
         
@@ -97,11 +97,11 @@ class App(mglw.WindowConfig):
         # -------------- CONFIG -------------------
         self.camera = Cam([0, 0, 0], [0,0], [0, 0, 1], 90)
 
-        self.moveSpeed=1
-        self.rotateSpeed = 0.1
+        self.moveSpeed=50
+        self.rotateSpeed = 0.8
         self.maxSteps = 100
         self.shadowsEnabled = True
-        self.lightSourcePos = (300, 80, 50)
+        self.lightSourcePos = [300, 80, 50]
         # -----------------------------------------
         
         self.keyStates = {
@@ -130,8 +130,8 @@ class App(mglw.WindowConfig):
     def on_mouse_position_event(self, x, y, dx, dy):
         #print(x, y, dx, dy)
         self.mouseMovement = [dx,dy]
-        self.camera.rotation[0]+=dx*self.rotateSpeed
-        self.camera.rotation[1]-=dy*self.rotateSpeed
+        self.camera.rotation[0]+=dx*self.rotateSpeed*self.ftime
+        self.camera.rotation[1]-=dy*self.rotateSpeed*self.ftime
         self.camera.UpdateOrientation()
     
     def set_uniform(self, u_name, u_value):
@@ -156,30 +156,36 @@ class App(mglw.WindowConfig):
 
     def on_render(self, time, frame_time):
         w, h = self.window_size
-        
-        objects[0]["position"][0]+=2*math.sin(time)
-        objects[0]["position"][2]+=math.cos(time)
+        self.ftime = frame_time
+        self.lightSourcePos[0]+=100*math.sin(time)*frame_time
+        self.lightSourcePos[2]+=100*math.sin(time)*frame_time
+        # objects[0]["position"][0]+=2*math.sin(time)
+        # objects[0]["position"][2]+=math.cos(time)
         objects[2]["position"] = objects[0]["position"]
         self.sdf_buffer.write(objects.tobytes())
         
         #self.sdf_buffer.bind_to_storage_buffer(1)
         
         if self.keyStates["W"]:
-            self.camera.pos[0]+=self.camera.hforward[0]*self.moveSpeed
-            self.camera.pos[2]+=self.camera.hforward[2]*self.moveSpeed
+            self.camera.pos[0]+=self.camera.hforward[0]*self.moveSpeed*frame_time
+            self.camera.pos[2]+=self.camera.hforward[2]*self.moveSpeed*frame_time
         if self.keyStates["S"]:
-            self.camera.pos[0]-=self.camera.hforward[0]*self.moveSpeed
-            self.camera.pos[2]-=self.camera.hforward[2]*self.moveSpeed
+            self.camera.pos[0]-=self.camera.hforward[0]*self.moveSpeed*frame_time
+            self.camera.pos[2]-=self.camera.hforward[2]*self.moveSpeed*frame_time
         if self.keyStates["D"]:
-            self.camera.pos[0]+=self.camera.hright[0]*self.moveSpeed
-            self.camera.pos[2]+=self.camera.hright[2]*self.moveSpeed
+            self.camera.pos[0]+=self.camera.hright[0]*self.moveSpeed*frame_time
+            self.camera.pos[2]+=self.camera.hright[2]*self.moveSpeed*frame_time
         if self.keyStates["A"]:
-            self.camera.pos[0]-=self.camera.hright[0]*self.moveSpeed
-            self.camera.pos[2]-=self.camera.hright[2]*self.moveSpeed
+            self.camera.pos[0]-=self.camera.hright[0]*self.moveSpeed*frame_time
+            self.camera.pos[2]-=self.camera.hright[2]*self.moveSpeed*frame_time
         if self.keyStates["SHIFT"]:
-            self.camera.pos[1]-=self.moveSpeed
+            self.camera.pos[1]-=self.moveSpeed*frame_time
         if self.keyStates["SPACE"]:
-            self.camera.pos[1]+=self.moveSpeed
+            self.camera.pos[1]+=self.moveSpeed*frame_time
+        # if self.keyStates["DOWN"]:
+        #     pass
+            
+
         
         #------------------------------------------------------
         self.main_fbo.use() # Pass 1
@@ -231,6 +237,8 @@ class App(mglw.WindowConfig):
             self.keyStates["SHIFT"] = True if action == keys.ACTION_PRESS else False if action == keys.ACTION_RELEASE else self.keyStates["SHIFT"]
         if key == self.wnd.keys.SPACE:
             self.keyStates["SPACE"] = True if action == keys.ACTION_PRESS else False if action == keys.ACTION_RELEASE else self.keyStates["SPACE"]
+        if key == self.wnd.keys.DOWN:
+            self.keyStates["DOWN"] = True if action == keys.ACTION_PRESS else False if action == keys.ACTION_RELEASE else self.keyStates["DOWN"]
 
 
 if __name__ == '__main__':
