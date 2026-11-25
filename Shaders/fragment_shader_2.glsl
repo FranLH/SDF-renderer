@@ -13,6 +13,7 @@ uniform int MAX_STEPS;
 uniform bool SHADOWS_ENABLED;
 uniform vec3 light_source_pos;
 
+const float dotScale = 1;
 const float MAX_DISTANCE = 1000.0;
 const float shadowOffset = 0.05;
 const float epsilon = 0.001;
@@ -43,9 +44,8 @@ float SdfBox( vec3 p, vec3 b )
          length(max(d,0.0));
 }
 
-float SdfSphere(vec3 p, float r) // return (cos(p.x/100) + sin(p.y/100) - cos(p.z/100))*100; // weird infinite structure
+float SdfSphere(vec3 p, float r) // return (cos(p.x/150) + sin(p.y/150) - cos(p.z/150))*80; // weird infinite structure
 {
-	
 	return length(p) - r;  //return length(p) - r;
 }
 
@@ -142,7 +142,7 @@ float ApplyOperations(float baseDist, int objID, vec3 rayPos)
 	return dist;
 }
 
-vec3 calculateColor(bool hit, vec3 hitPos, bool escaped, int colorID, bool hitLight, float lightDot)
+vec3 calculateColor(bool hit, vec3 hitPos, vec3 camPos, bool escaped, int colorID, bool hitLight, float lightDot)
 {
 	vec3 col;
 	if (escaped)
@@ -153,7 +153,8 @@ vec3 calculateColor(bool hit, vec3 hitPos, bool escaped, int colorID, bool hitLi
 	}
 	else // if (hit)
 	{
-		if (sin(hitPos.x/2) + sin(hitPos.y/2) + sin(hitPos.z/2) < 0)
+		
+		if ((sin(hitPos.x/dotScale) + sin(hitPos.y/dotScale) + sin(hitPos.z/dotScale)) < 0)
 		{
 			col = colors1[colorID];
 		}
@@ -246,7 +247,7 @@ void main()
 	//rayPos-=rayDirection*epsilon; // Push back to avoid shadow problems. Would be better to push in the direction of the normal
 	vec3 normal = calculateNormal(rayPos, closest);
 	rayPos+= normal *(shadowOffset*max(epsilon, pixelRadius * distance(rayPos, camPos)));
-	vec3 col = calculateColor(steps<MAX_STEPS, rayPos, minDist>MAX_DISTANCE, objects[closest].info.y, distance(camPos, light_source_pos)<distance(camPos,rayPos), dot(rayDirection, normalize(-camPos+light_source_pos)));
+	vec3 col = calculateColor(steps<MAX_STEPS, rayPos, camPos, minDist>MAX_DISTANCE, objects[closest].info.y, distance(camPos, light_source_pos)<distance(camPos,rayPos), dot(rayDirection, normalize(-camPos+light_source_pos)));
 
 
 
@@ -278,7 +279,7 @@ void main()
 					minDist = dist;
 				}
 			}
-			if (minDist < epsilon || minDist > MAX_DISTANCE)
+			if (minDist < epsilon || minDist >= distance(shadowRayPos, light_source_pos))
 			{
 				break;
 			}
@@ -289,7 +290,7 @@ void main()
 		}
 		//float darkness = distance(shadowRayPos, rayPos);
 		int shadow = 1;
-		if (minDist < MAX_DISTANCE) // If the light source gets blocked by any object
+		if (minDist <= distance(shadowRayPos, light_source_pos)) // If the light source gets blocked by any object
 		{
 			shadow = 0;
 			// max(dot(normal, lightDir), 0.0) * shadow

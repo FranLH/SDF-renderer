@@ -101,7 +101,7 @@ class App(mglw.WindowConfig):
         self.rotateSpeed = 0.8
         self.maxSteps = 100
         self.shadowsEnabled = True
-        self.lightSourcePos = [300, 80, 50]
+        self.lightSourcePos = [300, 100, -400] # self.lightSourcePos = [300, 80, 50]
         # -----------------------------------------
         
         self.keyStates = {
@@ -157,10 +157,11 @@ class App(mglw.WindowConfig):
     def on_render(self, time, frame_time):
         w, h = self.window_size
         self.ftime = frame_time
-        self.lightSourcePos[0]+=100*math.sin(time)*frame_time
-        self.lightSourcePos[2]+=100*math.sin(time)*frame_time
-        # objects[0]["position"][0]+=2*math.sin(time)
-        # objects[0]["position"][2]+=math.cos(time)
+        self.lightSourcePos[0]+=50*math.sin(time)*frame_time
+        self.lightSourcePos[2]+=50*math.sin(time)*frame_time
+        # objects[0]["position"][0]+=2*math.sin(time)*frame_time*15
+        # objects[0]["position"][1]+=math.cos(time)*frame_time*10
+        # objects[0]["position"][2]+=math.cos(time)*frame_time*20
         objects[2]["position"] = objects[0]["position"]
         self.sdf_buffer.write(objects.tobytes())
         
